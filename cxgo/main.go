@@ -1,47 +1,48 @@
 package main
 
 import (
-	"os"
-	"os/user"
-	"os/exec"
-	"fmt"
+	"bufio"
 	"bytes"
-	"time"
+	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
-	"strings"
+	"os"
+	"os/exec"
+	"os/user"
 	"strconv"
-	"bufio"
-	"encoding/json"
+	"strings"
+	"time"
+
 	// "encoding/hex"
 
 	"runtime"
 
 	"regexp"
-	
+
 	"flag"
 
 	"path/filepath"
 
 	"net"
 	"net/http"
-	
+
 	. "github.com/skycoin/cx/cx"
-	. "github.com/skycoin/cx/cxgo/parser"
 	. "github.com/skycoin/cx/cxgo/actions"
 	"github.com/skycoin/cx/cxgo/cxgo0"
+	. "github.com/skycoin/cx/cxgo/parser"
 	"github.com/theherk/viper"
 
 	"github.com/amherag/skycoin/src/cipher"
 	// "github.com/amherag/skycoin/src/cipher/encoder"
-	"github.com/amherag/skycoin/src/coin"
-	"github.com/amherag/skycoin/src/readable"
-	"github.com/amherag/skycoin/src/skycoin"
-	"github.com/amherag/skycoin/src/fiber"
-	"github.com/amherag/skycoin/src/util/logging"
-	"github.com/amherag/skycoin/src/visor"
 	"github.com/amherag/skycoin/src/api"
 	"github.com/amherag/skycoin/src/cli"
+	"github.com/amherag/skycoin/src/coin"
+	"github.com/amherag/skycoin/src/fiber"
+	"github.com/amherag/skycoin/src/readable"
+	"github.com/amherag/skycoin/src/skycoin"
+	"github.com/amherag/skycoin/src/util/logging"
+	"github.com/amherag/skycoin/src/visor"
 	"github.com/amherag/skycoin/src/wallet"
 
 	"errors"
@@ -74,9 +75,9 @@ func getJSON(url string, target interface{}) error {
 	return json.NewDecoder(r.Body).Decode(target)
 }
 
-func initCXBlockchain (initPrgrm []byte, coinname, seckey string) error {
+func initCXBlockchain(initPrgrm []byte, coinname, seckey string) error {
 	var err error
-	
+
 	// check that data.db does not exist
 	// if it does, delete it
 	userHome := UserHome()
@@ -155,7 +156,7 @@ func initCXBlockchain (initPrgrm []byte, coinname, seckey string) error {
 
 				// get genesis block
 				err = getJSON(fmt.Sprintf(genesisBlockURL, params.Node.WebInterfacePort), &genesisBlock)
-			
+
 				return
 			}
 		}
@@ -266,7 +267,7 @@ func runNode(mode string, options cxCmdFlags) *exec.Cmd {
 	switch mode {
 	case "publisher":
 		return exec.Command("cxcoin", "-enable-all-api-sets",
-		"-block-publisher=true",
+			"-block-publisher=true",
 			"-localhost-only",
 			"-disable-default-peers",
 			"-custom-peers-file=localhost-peers.txt",
@@ -277,31 +278,31 @@ func runNode(mode string, options cxCmdFlags) *exec.Cmd {
 			fmt.Sprintf("-genesis-signature=%s", options.genesisSignature),
 			fmt.Sprintf("-blockchain-public-key=%s", options.pubKey),
 			"-max-txn-size-unconfirmed=134217728",
-		 	"-max-txn-size-create-block=134217728",
+			"-max-txn-size-create-block=134217728",
 			"-max-block-size=134217728",
 			"-max-in-msg-len=134217929",
 			"-max-out-msg-len=134217929", // I don't know why this value, but the logger stated a value >= than this is needed
 		)
 	case "peer":
-	return exec.Command("cxcoin", "-enable-all-api-sets",
-		"-localhost-only",
-		"-disable-default-peers",
-		"-custom-peers-file=localhost-peers.txt",
-		"-download-peerlist=false",
-		"-launch-browser=false",
-		fmt.Sprintf("-genesis-address=%s", options.genesisAddress),
-		fmt.Sprintf("-genesis-signature=%s", options.genesisSignature),
-		fmt.Sprintf("-blockchain-public-key=%s", options.pubKey),
-		// "-web-interface-port=$(expr $2 + 420)",
-		fmt.Sprintf("-web-interface-port=%d", options.port + 420),
-		fmt.Sprintf("-port=%d", options.port),
-		fmt.Sprintf("-data-dir=/tmp/%d", options.port),
-		"-max-txn-size-unconfirmed=134217728",
-		"-max-txn-size-create-block=134217728",
-		"-max-block-size=134217728",
-		"-max-in-msg-len=134217929",
-		"-max-out-msg-len=134217929", // I don't know why this value, but the logger stated a value >= than this is needed
-	)
+		return exec.Command("cxcoin", "-enable-all-api-sets",
+			"-localhost-only",
+			"-disable-default-peers",
+			"-custom-peers-file=localhost-peers.txt",
+			"-download-peerlist=false",
+			"-launch-browser=false",
+			fmt.Sprintf("-genesis-address=%s", options.genesisAddress),
+			fmt.Sprintf("-genesis-signature=%s", options.genesisSignature),
+			fmt.Sprintf("-blockchain-public-key=%s", options.pubKey),
+			// "-web-interface-port=$(expr $2 + 420)",
+			fmt.Sprintf("-web-interface-port=%d", options.port+420),
+			fmt.Sprintf("-port=%d", options.port),
+			fmt.Sprintf("-data-dir=/tmp/%d", options.port),
+			"-max-txn-size-unconfirmed=134217728",
+			"-max-txn-size-create-block=134217728",
+			"-max-block-size=134217728",
+			"-max-in-msg-len=134217929",
+			"-max-out-msg-len=134217929", // I don't know why this value, but the logger stated a value >= than this is needed
+		)
 	default:
 		return nil
 	}
@@ -320,7 +321,7 @@ func main() {
 	flag.Parse()
 
 	// Propagate some options out to other packages
-	DebugLexer = options.debugLexer   // in package parser
+	DebugLexer = options.debugLexer // in package parser
 
 	if options.publisherMode || options.peerMode {
 		var cmd *exec.Cmd
@@ -352,6 +353,20 @@ func main() {
 				log.Error(scanner.Text())
 			}
 		}()
+
+		pingTracker() // TODO should we ping on startup or after first period of 5 min is over and we're sure instance is running correctly?
+		trackerTicker := time.NewTicker(5 * time.Minute)
+		go func() {
+			defer trackerTicker.Stop()
+
+			for {
+				select {
+				case <-trackerTicker.C:
+					pingTracker()
+				}
+			}
+
+		}()
 	}
 
 	// Generate a CX chain address.
@@ -360,7 +375,7 @@ func main() {
 		seed := cli.MakeAlphanumericSeed()
 		wltOpts := wallet.Options{
 			Label: "cxcoin",
-			Seed: seed,
+			Seed:  seed,
 		}
 
 		// Generate temporary wallet.
@@ -381,7 +396,7 @@ func main() {
 
 		return
 	}
-	
+
 	if options.walletMode {
 		if options.walletSeed == "" {
 			fmt.Println("creating a wallet requires a seed provided with --wallet-seed")
@@ -396,9 +411,9 @@ func main() {
 
 		wltOpts := wallet.Options{
 			Label: "cxcoin",
-			Seed: options.walletSeed,
+			Seed:  options.walletSeed,
 		}
-		
+
 		wlt, err := cli.GenerateWallet(options.walletId, wltOpts, 1)
 		if err != nil {
 			panic(err)
@@ -416,10 +431,10 @@ func main() {
 
 		// Printing JSON with wallet information
 		fmt.Println(string(wltJSON))
-		
+
 		return
 	}
-	
+
 	if options.printHelp {
 		printHelp()
 		return
@@ -499,7 +514,7 @@ func main() {
 			w = os.Stdout
 		} else {
 			tokenFilename := options.compileOutput
-			w, err = os. Create(tokenFilename)
+			w, err = os.Create(tokenFilename)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, "Error writing:", tokenFilename, err)
 				return
@@ -537,12 +552,12 @@ func main() {
 		sPrgrmSH = append(sPrgrmSH, sPrgrm[memOff:]...)
 		// Appending new heap
 		sPrgrmSH = append(sPrgrmSH, make([]byte, INIT_HEAP_SIZE)...)
-		
+
 		// Deserialize(sPrgrm).RunCompiled(0, cxArgs)
 		// bcPrgrm = Deserialize(sPrgrm)
 		// prevMemSize := len(PRGRM.Memory)
 		PRGRM = Deserialize(sPrgrmSH)
-		// // Adding 
+		// // Adding
 		// PRGRM.Memory = append(make([]byte, STACK_SIZE), PRGRM.Memory...)
 		// PRGRM.Memory
 		// PRGRM.Memory = append(PRGRM.Memory, make([]byte, prevMemSize - len(PRGRM.Memory))...)
@@ -567,26 +582,26 @@ func main() {
 
 	var prePkg *CXPackage
 	parseErrors := 0
-	
+
 	// We need to traverse the elements by hierarchy first add all the
 	// packages and structs at the same time then add globals, as these
 	// can be of a custom type (and it could be imported) the signatures
 	// of functions and methods are added in the cxgo0.y pass
 	if len(sourceCode) > 0 {
-		
-		reMultiCommentOpen  := regexp.MustCompile(`/\*`)
+
+		reMultiCommentOpen := regexp.MustCompile(`/\*`)
 		reMultiCommentClose := regexp.MustCompile(`\*/`)
 		reComment := regexp.MustCompile("//")
 
-		rePkg       := regexp.MustCompile("package")
-		rePkgName   := regexp.MustCompile("(^|[\\s])package\\s+([_a-zA-Z][_a-zA-Z0-9]*)")
-		reStrct     := regexp.MustCompile("type")
+		rePkg := regexp.MustCompile("package")
+		rePkgName := regexp.MustCompile("(^|[\\s])package\\s+([_a-zA-Z][_a-zA-Z0-9]*)")
+		reStrct := regexp.MustCompile("type")
 		reStrctName := regexp.MustCompile("(^|[\\s])type\\s+([_a-zA-Z][_a-zA-Z0-9]*)?\\s")
 
-		reGlbl     := regexp.MustCompile("var")
+		reGlbl := regexp.MustCompile("var")
 		reGlblName := regexp.MustCompile("(^|[\\s])var\\s([_a-zA-Z][_a-zA-Z0-9]*)")
 
-		reBodyOpen  := regexp.MustCompile("{")
+		reBodyOpen := regexp.MustCompile("{")
 		reBodyClose := regexp.MustCompile("}")
 
 		// 1. Identify all the packages and structs
@@ -628,9 +643,9 @@ func main() {
 					}
 
 					if match := rePkgName.FindStringSubmatch(string(line)); match != nil {
-						if pkg, err := cxgo0.PRGRM0.GetPackage(match[len(match) - 1]); err != nil {
+						if pkg, err := cxgo0.PRGRM0.GetPackage(match[len(match)-1]); err != nil {
 							// then it hasn't been added
-							newPkg := MakePackage(match[len(match) - 1])
+							newPkg := MakePackage(match[len(match)-1])
 							cxgo0.PRGRM0.AddPackage(newPkg)
 							prePkg = newPkg
 						} else {
@@ -651,10 +666,10 @@ func main() {
 					if match := reStrctName.FindStringSubmatch(string(line)); match != nil {
 						if prePkg == nil {
 							println(CompilationError(filename, lineno),
-							        "No package defined")
-						} else if _, err := cxgo0.PRGRM0.GetStruct(match[len(match) - 1], prePkg.Name); err != nil {
+								"No package defined")
+						} else if _, err := cxgo0.PRGRM0.GetStruct(match[len(match)-1], prePkg.Name); err != nil {
 							// then it hasn't been added
-							strct := MakeStruct(match[len(match) - 1])
+							strct := MakeStruct(match[len(match)-1])
 							prePkg.AddStruct(strct)
 						}
 					}
@@ -673,12 +688,12 @@ func main() {
 			scanner := bufio.NewScanner(strings.NewReader(source))
 			for scanner.Scan() {
 				line := scanner.Bytes()
-				
+
 				// we need to ignore function bodies
 				// it'll also ignore struct declaration's bodies, but this doesn't matter
 				commentLoc := reComment.FindIndex(line)
-				
-				multiCommentOpenLoc  := reMultiCommentOpen.FindIndex(line)
+
+				multiCommentOpenLoc := reMultiCommentOpen.FindIndex(line)
 				multiCommentCloseLoc := reMultiCommentClose.FindIndex(line)
 
 				if commentedCode && multiCommentCloseLoc != nil {
@@ -702,18 +717,18 @@ func main() {
 						// then it's commented out
 						continue
 					}
-					
+
 					if match := rePkgName.FindStringSubmatch(string(line)); match != nil {
-						if pkg, err := cxgo0.PRGRM0.GetPackage(match[len(match) - 1]); err != nil {
+						if pkg, err := cxgo0.PRGRM0.GetPackage(match[len(match)-1]); err != nil {
 							// then it hasn't been added
-							prePkg = MakePackage(match[len(match) - 1])
+							prePkg = MakePackage(match[len(match)-1])
 							cxgo0.PRGRM0.AddPackage(prePkg)
 						} else {
 							prePkg = pkg
 						}
 					}
 				}
-				
+
 				if locs := reBodyOpen.FindAllIndex(line, -1); locs != nil {
 					for _, loc := range locs {
 						if !(multiCommentCloseLoc != nil && multiCommentCloseLoc[0] > loc[0]) {
@@ -745,7 +760,7 @@ func main() {
 
 				// we could have this situation: {var local i32}
 				// but we don't care about this, as the later passes will throw an error as it's invalid syntax
-				
+
 				if loc := rePkg.FindIndex(line); loc != nil {
 					if (commentLoc != nil && commentLoc[0] < loc[0]) ||
 						(multiCommentOpenLoc != nil && multiCommentOpenLoc[0] < loc[0]) ||
@@ -753,9 +768,9 @@ func main() {
 						// then it's commented out
 						continue
 					}
-					
+
 					if match := rePkgName.FindStringSubmatch(string(line)); match != nil {
-						if pkg, err := cxgo0.PRGRM0.GetPackage(match[len(match) - 1]); err != nil {
+						if pkg, err := cxgo0.PRGRM0.GetPackage(match[len(match)-1]); err != nil {
 							// it should be already present
 							panic(err)
 						} else {
@@ -775,9 +790,9 @@ func main() {
 					}
 
 					if match := reGlblName.FindStringSubmatch(string(line)); match != nil {
-						if _, err := prePkg.GetGlobal(match[len(match) - 1]); err != nil {
+						if _, err := prePkg.GetGlobal(match[len(match)-1]); err != nil {
 							// then it hasn't been added
-							arg := MakeArgument(match[len(match) - 1], "", 0)
+							arg := MakeArgument(match[len(match)-1], "", 0)
 							arg.Offset = -1
 							arg.Package = prePkg
 							prePkg.AddGlobal(arg)
@@ -810,7 +825,6 @@ func main() {
 		arg1 := MakeArgument(OS_ARGS, "", -1).AddType(TypeNames[TYPE_STR])
 		arg1 = DeclarationSpecifiers(arg1, 0, DECL_BASIC)
 		arg1 = DeclarationSpecifiers(arg1, 0, DECL_SLICE)
-
 
 		DeclareGlobalInPackage(osPkg, arg0, arg1, nil, false)
 	}
@@ -847,7 +861,7 @@ func main() {
 
 	// adding *init function that initializes all the global variables
 	addInitFunction(PRGRM)
-	
+
 	LineNo = 0
 
 	if FoundCompileErrors {
@@ -863,28 +877,28 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
-			
+
 			PRGRM.RemovePackage(MAIN_FUNC)
-			
+
 			s := Serialize(PRGRM, 1)
 			s = ExtractBlockchainProgram(s, s)
 
 			configDir := os.Getenv("GOPATH") + "/src/github.com/skycoin/cx/"
 			configFile := "fiber"
-			
+
 			cmd := exec.Command("go", "install", "./cmd/newcoin/...")
 			cmd.Start()
 			cmd.Wait()
-			
+
 			cmd = exec.Command("newcoin", "createcoin",
 				fmt.Sprintf("--coin=%s", options.programName),
 				fmt.Sprintf("--template-dir=%s%s", os.Getenv("GOPATH"), "/src/github.com/skycoin/cx/template"),
-				"--config-file=" + configFile + ".toml",
-				"--config-dir=" + configDir,
+				"--config-file="+configFile+".toml",
+				"--config-dir="+configDir,
 			)
 			cmd.Start()
 			cmd.Wait()
-			
+
 			cmd = exec.Command("go", "install", "./cmd/cxcoin/...")
 			cmd.Start()
 			cmd.Wait()
@@ -896,20 +910,20 @@ func main() {
 			fmt.Println("\ngenesis signature:", genesisSignature)
 
 			viper.SetConfigName(configFile) // name of config file (without extension)
-			viper.AddConfigPath(".")      // optionally look for config in the working directory
-			err = viper.ReadInConfig()   // Find and read the config file
-			if err != nil { // Handle errors reading the config file
+			viper.AddConfigPath(".")        // optionally look for config in the working directory
+			err = viper.ReadInConfig()      // Find and read the config file
+			if err != nil {                 // Handle errors reading the config file
 				panic(err)
 			}
 
 			viper.Set("node.genesis_signature_str", genesisSignature)
 			viper.WriteConfig()
-		
+
 			cmd = exec.Command("newcoin", "createcoin",
 				fmt.Sprintf("--coin=%s", options.programName),
 				fmt.Sprintf("--template-dir=%s%s", os.Getenv("GOPATH"), "/src/github.com/skycoin/cx/template"),
-				"--config-file=" + configFile + ".toml",
-				"--config-dir=" + configDir,
+				"--config-file="+configFile+".toml",
+				"--config-dir="+configDir,
 			)
 			cmd.Start()
 			cmd.Wait()
@@ -924,20 +938,20 @@ func main() {
 			dsPrgrm := Deserialize(sPrgrm)
 			PRGRM.StackPointer = 0
 			PRGRM.HeapPointer = dsPrgrm.HeapPointer
-			
+
 			s := Serialize(PRGRM, 1)
 			txnCode := ExtractTransactionProgram(sPrgrm, s)
 
 			// All these HTTP requests need to be dropped in favor of calls to calls to functions
 			// from the `cli` or `api` Skycoin packages
-			addr := fmt.Sprintf("http://127.0.0.1:%d", options.port + 420)
+			addr := fmt.Sprintf("http://127.0.0.1:%d", options.port+420)
 			skycoinClient := api.NewClient(addr)
 			csrfToken, err := skycoinClient.CSRF()
 			if err != nil {
 				panic(err)
 			}
 
-			url := fmt.Sprintf("http://127.0.0.1:%d/api/v1/wallet/transaction", options.port + 420)
+			url := fmt.Sprintf("http://127.0.0.1:%d/api/v1/wallet/transaction", options.port+420)
 
 			var dataMap map[string]interface{}
 			dataMap = make(map[string]interface{}, 0)
@@ -947,7 +961,6 @@ func main() {
 			dataMap["wallet_id"] = string(options.walletId)
 			dataMap["to"] = []interface{}{map[string]string{"address": "2PBcLADETphmqWV7sujRZdh3UcabssgKAEB", "coins": "1", "hours": "0"}}
 
-			
 			jsonStr, err := json.Marshal(dataMap)
 			if err != nil {
 				panic(err)
@@ -976,7 +989,7 @@ func main() {
 				return
 			}
 
-			url = fmt.Sprintf("http://127.0.0.1:%d/api/v1/injectTransaction", options.port + 420)
+			url = fmt.Sprintf("http://127.0.0.1:%d/api/v1/injectTransaction", options.port+420)
 			dataMap = make(map[string]interface{}, 0)
 			dataMap["rawtx"] = respBody["encoded_transaction"]
 
@@ -1004,12 +1017,12 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
-			
+
 			if AssertFailed() {
 				os.Exit(CX_ASSERT)
 			}
 		}
-		
+
 		if BaseOutput {
 			//PRGRM.Compile(true)
 		}
@@ -1023,12 +1036,11 @@ func main() {
 	}
 }
 
-
 // Used for the -heap-initial, -heap-max and -stack-size flags.
 // This function parses, for example, "1M" to 1048576 (the corresponding number of bytes)
 // Possible suffixes are: G or g (gigabytes), M or m (megabytes), K or k (kilobytes)
-func parseMemoryString (s string) int {
-	suffix := s[len(s) - 1]
+func parseMemoryString(s string) int {
+	suffix := s[len(s)-1]
 	_, notSuffix := strconv.ParseFloat(string(suffix), 64)
 
 	if notSuffix == nil {
@@ -1049,7 +1061,7 @@ func parseMemoryString (s string) int {
 			// malformed size
 			return -1
 		}
-		
+
 		switch suffix {
 		case 'G':
 			return int(num * 1073741824)
@@ -1065,20 +1077,20 @@ func parseMemoryString (s string) int {
 
 // var PRGRM *CXProgram
 
-func unsafeEval (code string) (out string) {
+func unsafeEval(code string) (out string) {
 	var lexer *Lexer
 	defer func() {
 		if r := recover(); r != nil {
 			out = fmt.Sprintf("%v", r)
 			lexer.Stop()
-		}  
+		}
 	}()
-	
+
 	// storing strings sent to standard output
 	old := os.Stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w
-	
+
 	LineNo = 0
 
 	PRGRM = MakeProgram()
@@ -1105,7 +1117,7 @@ func unsafeEval (code string) (out string) {
 		io.Copy(&buf, r)
 		outC <- buf.String()
 	}()
-	
+
 	w.Close()
 	os.Stdout = old // restoring the real stdout
 	out = <-outC
@@ -1114,12 +1126,12 @@ func unsafeEval (code string) (out string) {
 	return out
 }
 
-func Eval (code string) string {
+func Eval(code string) string {
 	runtime.GOMAXPROCS(2)
 	ch := make(chan string, 1)
 
 	var result string
-	
+
 	go func() {
 		result = unsafeEval(code)
 		ch <- result
@@ -1141,11 +1153,11 @@ type SourceCode struct {
 	Code string
 }
 
-func ServiceMode () {
+func ServiceMode() {
 	host := ":5336"
 
 	mux := http.NewServeMux()
-	
+
 	mux.Handle("/", http.FileServer(http.Dir("./dist")))
 	mux.HandleFunc("/eval", func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
@@ -1155,7 +1167,7 @@ func ServiceMode () {
 			http.Error(w, err.Error(), 500)
 			return
 		}
-		
+
 		var source SourceCode
 		if err := json.Unmarshal(b, &source); err != nil {
 			http.Error(w, err.Error(), 500)
@@ -1163,7 +1175,7 @@ func ServiceMode () {
 		}
 
 		if err := r.ParseForm(); err == nil {
-			fmt.Fprintf(w, "%s", Eval(source.Code + "\n"))
+			fmt.Fprintf(w, "%s", Eval(source.Code+"\n"))
 		}
 	})
 
@@ -1196,14 +1208,14 @@ func PersistentServiceMode() {
 	for {
 		var inp string
 		var ok bool
-		
+
 		printPrompt()
 
 		if inp, ok = readline(fi); ok {
 			if isJSON(inp) {
 				var err error
 				client := &http.Client{}
-                body := bytes.NewBufferString(inp)
+				body := bytes.NewBufferString(inp)
 				req, err := http.NewRequest("GET", "http://127.0.0.1:5336/eval", body)
 				if err != nil {
 					fmt.Println(err)
@@ -1220,19 +1232,19 @@ func PersistentServiceMode() {
 	}
 }
 
-func getWorkingDirectory (file string) string {
+func getWorkingDirectory(file string) string {
 	file = filepath.FromSlash(file)
 	var c int = len(file) - 1
 	for ; c > 0; c-- {
-		if file[c - 1] == os.PathSeparator {
+		if file[c-1] == os.PathSeparator {
 			break
 		}
 	}
-	
+
 	return file[:c]
 }
 
-func printPrompt () {
+func printPrompt() {
 	if ReplTargetMod != "" {
 		fmt.Println(fmt.Sprintf(":package %s ...", ReplTargetMod))
 		fmt.Printf("* ")
@@ -1247,7 +1259,7 @@ func printPrompt () {
 	}
 }
 
-func repl () {
+func repl() {
 	fmt.Println("CX", VERSION)
 	fmt.Println("More information about CX is available at http://cx.skycoin.net/ and https://github.com/skycoin/cx/")
 
@@ -1262,7 +1274,7 @@ func repl () {
 		var ok bool
 
 		printPrompt()
-		
+
 		if inp, ok = readline(fi); ok {
 			if ReplTargetFn != "" {
 				inp = fmt.Sprintf(":func %s {\n%s\n}\n", ReplTargetFn, inp)
@@ -1300,22 +1312,22 @@ func repl () {
 	}
 }
 
-func initNewProject () {
+func initNewProject() {
 	var name string
-	
+
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("Name of the project: ")
 	name, _ = reader.ReadString('\n')
 
 	fmt.Printf("Creating project %s%s/", SRCPATH, name)
 
-	os.MkdirAll(fmt.Sprintf("%s%s", SRCPATH, name[:len(name) - 1]), 0751)
+	os.MkdirAll(fmt.Sprintf("%s%s", SRCPATH, name[:len(name)-1]), 0751)
 }
 
-func checkCXPathSet () {
+func checkCXPathSet() {
 	if os.Getenv("CXPATH") == "" {
 		usr, err := user.Current()
-		if err != nil { 
+		if err != nil {
 			panic(err)
 		}
 
@@ -1333,7 +1345,7 @@ func checkCXPathSet () {
 	COREPATH = filepath.Dir(ex)
 }
 
-func addInitFunction (PRGRM *CXProgram) {
+func addInitFunction(PRGRM *CXProgram) {
 	if main, err := PRGRM.GetPackage(MAIN_PKG); err == nil {
 		initFn := MakeFunction(SYS_INIT_FUNC, CurrentFile, LineNo)
 		main.AddFunction(initFn)
@@ -1348,7 +1360,7 @@ func addInitFunction (PRGRM *CXProgram) {
 // ----------------------------------------------------------------
 //                     Utility functions
 
-func readline (fi *bufio.Reader) (string, bool) {
+func readline(fi *bufio.Reader) (string, bool) {
 	s, err := fi.ReadString('\n')
 
 	s = strings.Replace(s, "\n", "", -1)
@@ -1364,7 +1376,7 @@ func readline (fi *bufio.Reader) (string, bool) {
 	if err != nil {
 		return "", false
 	}
-	
+
 	return s, true
 }
 
@@ -1372,4 +1384,12 @@ func isJSON(str string) bool {
 	var js map[string]interface{}
 	err := json.Unmarshal([]byte(str), &js)
 	return err == nil
+}
+
+func pingTracker() {
+	// runError, cmdError, stdOut := os.Run("cx-tracker persist config.json", 2048, 100, "./")
+	cmd := exec.Command("cx-tracker", "persist", "cx-config.json")
+	if err := cmd.Run(); err != nil {
+		log.Error("Unable to ping CX Tracker due to error", err)
+	}
 }
